@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import io
-from datetime import date
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
 import pandas as pd
@@ -17,25 +17,33 @@ NAVY, NAVY2, BLUE, GOLD, GOLD2, PALE = "#081F3A", "#0B2545", "#124A78", "#F3C84B
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap');
-.stApp{background:linear-gradient(135deg,#F7F9FC,#EEF3F8);font-family:'Source Sans 3',sans-serif;color:#102A43}
-h1,h2,h3{font-family:'Playfair Display',serif!important;color:#0B2545!important}
-.hero{background:linear-gradient(115deg,#081F3A 0%,#124A78 70%,#A97908 100%);padding:1.45rem 1.7rem;border-radius:18px;border:1px solid #D4A017;box-shadow:0 8px 24px #081f3a28;margin-bottom:1rem}
-.hero h1,.hero p{color:white!important;margin:.1rem 0}.hero b{color:#F3C84B}
-.kpi{background:white;border:1px solid #DCE6F0;border-top:5px solid #D4A017;border-radius:14px;padding:1rem;min-height:112px;box-shadow:0 5px 16px #081f3a16}.kpi .v{font-size:1.65rem;font-weight:800;color:#0B3B67}.kpi .l{font-weight:700;color:#506784}
-section[data-testid="stSidebar"]{background:linear-gradient(180deg,#0B2545,#153F69)}
-section[data-testid="stSidebar"] h1,section[data-testid="stSidebar"] h2,section[data-testid="stSidebar"] h3,section[data-testid="stSidebar"] label p{color:#F3C84B!important;font-weight:700!important}
-section[data-testid="stSidebar"] .stMarkdown p,section[data-testid="stSidebar"] small{color:white}
-section[data-testid="stSidebar"] [data-baseweb="select"]>div,section[data-testid="stSidebar"] input{background:white!important;color:#0B2545!important;-webkit-text-fill-color:#0B2545!important}
-[data-testid="stTabs"] [data-baseweb="tab-list"]{gap:8px;flex-wrap:wrap}
-[data-testid="stTabs"] button{background:#0B3B67!important;border:2px solid #D4A017!important;border-radius:10px!important;padding:.65rem .85rem!important;height:auto!important}
-[data-testid="stTabs"] button p{color:#F3C84B!important;font-size:1rem!important;font-weight:800!important}
-[data-testid="stTabs"] button[aria-selected="true"]{background:linear-gradient(135deg,#F3C84B,#D4A017)!important}
-[data-testid="stTabs"] button[aria-selected="true"] p{color:#081F3A!important}
-.stButton button,.stDownloadButton button{background:#0B3B67!important;color:white!important;border:2px solid #D4A017!important;font-weight:800!important}.stButton button:hover,.stDownloadButton button:hover{background:#D4A017!important;color:#081F3A!important}
-.pill{background:#F3C84B;color:#081F3A;padding:.55rem .8rem;border-radius:9px;font-weight:800;margin:.5rem 0 1rem}
-.note{background:#FFF8DE;border-left:5px solid #D4A017;padding:.8rem;border-radius:8px}
-.footer{background:#081F3A;color:white;padding:1.2rem;border-radius:14px;text-align:center;margin-top:1.5rem;border-top:4px solid #D4A017}.footer a{color:#F3C84B!important;font-weight:700}
+
+.stApp{background:#223247;color:#E6EEF5;font-family:Arial,sans-serif}
+.block-container{padding-top:2rem;max-width:1500px}
+h1,h2,h3{font-family:Arial,sans-serif!important;color:#E6EEF5!important;letter-spacing:-.02em}
+p,li,label{font-size:1.05rem;line-height:1.65}
+.hero{background:#101F34;padding:1.5rem 1.7rem;border-radius:12px;border:1px solid #19476A;margin-bottom:1rem}
+.hero h1{font-size:2rem!important;margin:.7rem 0;color:#E6EEF5!important}.hero p{color:#B9D7E2}.hero b,.eyebrow{color:#FFD23F}
+.eyebrow{display:inline-block;background:#FFD23F;color:#101F34;padding:.3rem .65rem;border-radius:4px;font-size:.75rem;font-weight:800;letter-spacing:.08em}
+.kpi{background:#101F34;border:1px solid #19476A;border-top:3px solid #FFD23F;border-radius:10px;padding:1rem;min-height:125px}.kpi .v{font-size:1.3rem;font-weight:700;color:#F0F5FA;overflow-wrap:anywhere}.kpi .l{font-size:.85rem;color:#B9D7E2;margin-bottom:.5rem}
+section[data-testid="stSidebar"]{background:#101F34;border-right:1px solid #19476A}
+section[data-testid="stSidebar"] h2,section[data-testid="stSidebar"] h3{color:#FFD23F!important}
+section[data-testid="stSidebar"] label,section[data-testid="stSidebar"] label p{color:#B9D7E2!important}
+section[data-testid="stSidebar"] input{background:#0B1728!important;color:#E6EEF5!important;-webkit-text-fill-color:#E6EEF5!important}
+[data-baseweb="select"]>div{background:#101F34!important;color:#E6EEF5!important;border-color:#38617C!important}
+[data-baseweb="tag"]{background:#284761!important;color:#FFFFFF!important}
+[data-baseweb="popover"]{color:#E6EEF5}
+[data-testid="stTabs"] [data-baseweb="tab-list"]{gap:6px;flex-wrap:wrap}
+[data-testid="stTabs"] button{background:#101F34!important;border:1px solid #38617C!important;border-radius:7px!important;padding:.55rem .8rem!important;height:auto!important}
+[data-testid="stTabs"] button p{color:#CFDFEA!important;font-weight:600!important}
+[data-testid="stTabs"] button[aria-selected="true"]{border-color:#FFD23F!important;border-bottom:3px solid #FFD23F!important}
+[data-testid="stTabs"] button[aria-selected="true"] p{color:#FFD23F!important}
+.stButton button,.stDownloadButton button{background:#FFD23F!important;color:#101F34!important;border:1px solid #FFD23F!important;font-weight:700!important}
+.stButton button:hover,.stDownloadButton button:hover{background:#FFE27B!important}
+.pill,.note{background:#101F34;color:#D9E8F2;padding:.8rem 1rem;border-radius:8px;border:1px solid #19476A;margin:.5rem 0 1rem}
+.note{border-left:3px solid #FFD23F}.pill{font-weight:600}
+.footer{color:#D9E8F2;padding:1.2rem;text-align:center;margin-top:2rem;border-top:2px solid #FFD23F}.footer a{color:#FFD23F!important;font-weight:700}
+@media(max-width:768px){.hero{padding:1rem}.hero h1{font-size:1.5rem!important}.block-container{padding:1rem}.kpi{min-height:100px}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -115,23 +123,30 @@ def load_all(selected):
     try: codes=resolve_targets(catalogue())
     except Exception: codes={}
     series={}; errors=[]
-    for name in selected:
-        try:
-            candidates=[]
-            for code in codes.get(name,[]):
-                try:
-                    candidate=nav_history(code)
-                    if len(candidate)>50: candidates.append(candidate)
-                except Exception:
-                    continue
-            # Renamed or merged schemes can have continuation NAV histories under
-            # multiple codes. Stitch the non-overlapping records into one series.
-            s=(pd.concat(candidates).sort_index().groupby(level=0).last()
-               if candidates else pd.Series(dtype=float))
-            if len(s)>50: series[name]=s
-            else: errors.append(name)
-        except Exception: errors.append(name)
-    return pd.concat(series,axis=1).sort_index().ffill(limit=5) if series else pd.DataFrame(), errors
+    def fetch_one(name):
+        candidates=[]
+        for code in codes.get(name,[]):
+            try:
+                candidate=nav_history(code)
+                if len(candidate)>50: candidates.append(candidate)
+            except Exception:
+                continue
+        # Keep a single scheme history: do not splice potentially distinct plans.
+        return max(candidates,key=lambda x:(x.index.max(),len(x))) if candidates else pd.Series(dtype=float)
+    progress=st.progress(0,text="Loading selected fund histories…")
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        futures={pool.submit(fetch_one,name):name for name in selected}
+        for completed,future in enumerate(as_completed(futures),1):
+            name=futures[future]
+            try:
+                result=future.result()
+                if len(result)>50: series[name]=result
+                else: errors.append(name)
+            except Exception: errors.append(name)
+            progress.progress(completed/len(selected),text=f"Loaded {completed} of {len(selected)} funds · {name}")
+    progress.empty()
+    ordered={name:series[name] for name in selected if name in series}
+    return pd.concat(ordered,axis=1).sort_index() if ordered else pd.DataFrame(), errors
 
 def period_start(idx, label):
     end=idx.max(); years={"1 Year":1,"3 Years":3,"5 Years":5}.get(label)
@@ -206,27 +221,34 @@ def selection_score(nav):
 
 def fmt_pct(x): return "—" if pd.isna(x) else f"{x:.2%}"
 def chart(fig,h=460):
-    fig.update_layout(height=h,margin=dict(l=20,r=20,t=55,b=20),paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="white",font=dict(color=NAVY2),title_font=dict(color=NAVY2,family="Playfair Display"),legend_title_text="")
+    fig.update_layout(height=h,margin=dict(l=20,r=20,t=55,b=20),paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="#101F34",font=dict(color="#D9E8F2"),title_font=dict(color="#E6EEF5",family="Arial"),legend_title_text="")
+    fig.update_xaxes(gridcolor="#28435A", zerolinecolor="#38617C")
+    fig.update_yaxes(gridcolor="#28435A", zerolinecolor="#38617C")
     return fig
 def kpi(label,value): st.markdown(f'<div class="kpi"><div class="l">{label}</div><div class="v">{value}</div></div>',unsafe_allow_html=True)
 
-st.markdown(f'<div class="hero"><h1>📈 Top 25 Mutual Fund Performance Analytics</h1><p><b>Mountain Path Academy</b> · Five categories · Five-year eligibility · Transparent quantitative ranking · Updated {date.today():%d %B %Y}</p></div>',unsafe_allow_html=True)
+st.markdown('<div class="hero"><span class="eyebrow">FREE LEARNING TOOL · MBA · CFA · FRM</span><h1>Mutual Fund Performance Explorer</h1><p>Compare 25 selected Indian equity funds across five categories. Explore returns, risk, consistency and investment outcomes using Direct–Growth NAV histories.</p></div>',unsafe_allow_html=True)
+st.markdown('<div class="note"><b style="color:#FFD23F">How to start</b><br>1. Choose a category and funds in the sidebar.<br>2. Select an analysis horizon and a fund for detailed study.<br>3. Explore the tabs; download data from Selection & Ranking.<br><small>This is a curated educational universe, not a market-wide list of the 25 best funds.</small></div>',unsafe_allow_html=True)
 
 with st.sidebar:
-    st.markdown("## 📈 Analysis Controls")
-    selected_categories=st.multiselect("Fund categories",CATEGORIES,default=CATEGORIES)
+    st.markdown('<div class="pill"><span class="eyebrow">THE MOUNTAIN PATH ACADEMY</span><br>Mutual Fund Performance Explorer</div>',unsafe_allow_html=True)
+    st.markdown("### Analysis controls")
+    selected_categories=st.multiselect("Fund categories",CATEGORIES,default=["Large Cap"])
     available=[n for n,v in FUND_UNIVERSE.items() if v["category"] in selected_categories]
-    chosen=st.multiselect("Fund universe",available,default=available)
-    horizon=st.selectbox("Ranking horizon",["1 Year","3 Years","5 Years","YTD","Since Available"],index=1)
+    with st.expander("Choose funds", expanded=False):
+        chosen=st.multiselect("Fund universe",available,default=available)
+    st.caption(f"{len(chosen)} funds selected · Direct–Growth universe")
+    horizon=st.selectbox("Analysis horizon",["1 Year","3 Years","5 Years","YTD","Since Available"],index=1)
     primary=st.selectbox("Detailed fund",chosen or list(TARGETS))
     st.markdown(f'<div class="pill">Selected: {primary}</div>',unsafe_allow_html=True)
     investment=st.number_input("Lump-sum investment (₹)",10000,10000000,100000,10000)
     sip=st.number_input("Monthly SIP (₹)",500,1000000,10000,500)
-    if st.button("↻ Refresh live NAV data",use_container_width=True): st.cache_data.clear(); st.rerun()
+    if st.button("↻ Refresh NAV data",use_container_width=True):
+        nav_history.clear(); catalogue.clear(); st.rerun()
     st.markdown("---\n**Prof. V. Ravichandran**  \nFounder, The Mountain Path Academy  \n[Academy](https://themountainpathacademy.com/) · [LinkedIn](https://www.linkedin.com/in/trichyravis/) · [GitHub](https://github.com/trichyravis)")
 
 if not chosen: st.warning("Select at least one fund from the sidebar."); st.stop()
-with st.spinner("Loading latest mutual-fund NAV history…"):
+with st.spinner("Retrieving NAV histories; repeated requests use the six-hour cache…"):
     nav,failed=load_all(chosen)
 if nav.empty:
     st.error("Live NAV data could not be loaded. Please use Refresh after checking internet access."); st.stop()
@@ -238,6 +260,12 @@ if short_history:
 if nav.empty:
     st.error("None of the selected funds currently meets the minimum five-year NAV-history rule."); st.stop()
 
+latest_dates=nav.apply(lambda x:x.dropna().index.max())
+st.caption(f"NAV observation dates: {latest_dates.min():%d %b %Y} – {latest_dates.max():%d %b %Y} · Source: MFAPI · NAV cache: up to 6 hours")
+with st.expander("Data coverage and freshness"):
+    coverage=pd.DataFrame({"Category":[FUND_UNIVERSE[n]["category"] for n in nav],"First observation":[nav[n].dropna().index.min().date() for n in nav],"Latest NAV date":[latest_dates[n].date() for n in nav],"Observations":[nav[n].count() for n in nav]},index=nav.columns)
+    st.dataframe(coverage,use_container_width=True)
+    st.caption("NAV dates describe the data, not today's page date. Missing observations are not forward-filled. Exact plan identity should be verified against the source before investment use.")
 pnav=sliced(nav,horizon)
 period_unavailable=[n for n in pnav if pnav[n].dropna().shape[0]<2]
 if period_unavailable:
@@ -341,7 +369,7 @@ with tabs[7]:
     csv=export.to_csv(index=False).encode()
     bio=io.BytesIO()
     with pd.ExcelWriter(bio,engine="openpyxl") as w:
-        export.to_excel(w,index=False,sheet_name="Ranking"); nav.to_excel(w,sheet_name="NAV History"); pnav.pct_change().to_excel(w,sheet_name="Daily Returns")
+        export.to_excel(w,index=False,sheet_name="Ranking"); nav.to_excel(w,sheet_name="NAV History"); pnav.pct_change(fill_method=None).to_excel(w,sheet_name="Daily Returns")
         pd.DataFrame([
             ["Minimum NAV history","5 years","Eligibility filter"],
             ["Plan type","Direct–Growth","Eligibility filter"],
@@ -360,6 +388,17 @@ with tabs[7]:
 
 with tabs[8]:
     st.subheader("Selection methodology and interpretation")
+    with st.expander("Learn the calculation · CAGR, volatility and drawdown", expanded=True):
+        study=pnav[primary].dropna()
+        years=(study.index[-1]-study.index[0]).days/365.25
+        st.markdown(f"**Worked example: {primary} · {horizon}**")
+        st.latex(r"CAGR=\left(\frac{NAV_{end}}{NAV_{start}}\right)^{1/T}-1")
+        st.write(f"Start NAV ₹{study.iloc[0]:,.2f}; end NAV ₹{study.iloc[-1]:,.2f}; elapsed time {years:.3f} years → CAGR {cagr(study):.2%}.")
+        st.code("=(End_NAV/Start_NAV)^(365.25/(End_Date-Start_Date))-1",language=None)
+        st.markdown("**Annualised volatility:** sample standard deviation of daily returns × √252. Excel: `=STDEV.S(Daily_Returns)*SQRT(252)`. This assumes 252 trading observations per year.")
+        st.markdown("**Drawdown:** NAV ÷ highest prior NAV − 1. Maximum drawdown is the most negative observation; it measures the worst historical decline from a prior peak.")
+        st.markdown("**Sharpe (0% proxy):** annualised arithmetic return ÷ annualised volatility, using a 0% risk-free proxy. A proper excess-return comparison requires a matched risk-free series.")
+        st.caption("CAGR is a geometric growth rate; the arithmetic annual return used in Sharpe is a different measure. Both are based on historical NAVs.")
     st.markdown("""
 ### Universe construction
 
@@ -406,3 +445,4 @@ with tabs[9]:
     st.info("Data source: public NAV history supplied through MFAPI/AMFI-linked records. NAV is not adjusted here for investor-specific tax, load or expense differences beyond what is reflected in the published plan NAV.")
 
 st.markdown("""<div class="footer"><b>The Mountain Path Academy</b><br>Developed by Prof. V. Ravichandran · Visiting Professor & Professor of Practice at leading business schools<br><a href="https://themountainpathacademy.com/">Academy</a> · <a href="https://www.linkedin.com/in/trichyravis/">LinkedIn</a> · <a href="https://github.com/trichyravis">GitHub</a><br><small>Educational analytics project · Not investment advice · © 2026 The Mountain Path Academy</small></div>""",unsafe_allow_html=True)
+
