@@ -33,11 +33,14 @@ section[data-testid="stSidebar"] input{background:#0B1728!important;color:#E6EEF
 [data-baseweb="select"]>div{background:#101F34!important;color:#E6EEF5!important;border-color:#38617C!important}
 [data-baseweb="tag"]{background:#284761!important;color:#FFFFFF!important}
 [data-baseweb="popover"]{color:#E6EEF5}
-[data-testid="stTabs"] [data-baseweb="tab-list"]{gap:6px;flex-wrap:wrap}
-[data-testid="stTabs"] button{background:#101F34!important;border:1px solid #38617C!important;border-radius:7px!important;padding:.55rem .8rem!important;height:auto!important}
-[data-testid="stTabs"] button p{color:#CFDFEA!important;font-weight:600!important}
-[data-testid="stTabs"] button[aria-selected="true"]{border-color:#FFD23F!important;border-bottom:3px solid #FFD23F!important}
-[data-testid="stTabs"] button[aria-selected="true"] p{color:#FFD23F!important}
+[role="tablist"]{gap:8px;flex-wrap:wrap;overflow:visible;height:auto;background:transparent;padding:6px 0 12px}
+[role="tab"]{background:#101F34!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important;border:1px solid #63829C!important;border-radius:7px!important;padding:.65rem .9rem!important;min-height:46px;height:auto!important;opacity:1!important;white-space:normal}
+[role="tab"] *{color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important;font-weight:700!important;opacity:1!important;visibility:visible!important}
+[role="tab"][aria-selected="true"]{background:#FFD23F!important;border-color:#FFD23F!important;color:#101F34!important;-webkit-text-fill-color:#101F34!important}
+[role="tab"][aria-selected="true"] *{color:#101F34!important;-webkit-text-fill-color:#101F34!important}
+[role="tab"]:focus-visible{outline:3px solid #FFFFFF;outline-offset:3px}
+[data-testid="stExpander"] summary,[data-testid="stExpander"] summary *{color:#E6EEF5!important;-webkit-text-fill-color:#E6EEF5!important}
+[data-testid="stCaptionContainer"] p{color:#B9CDDD!important}
 .stButton button,.stDownloadButton button{background:#FFD23F!important;color:#101F34!important;border:1px solid #FFD23F!important;font-weight:700!important}
 .stButton button:hover,.stDownloadButton button:hover{background:#FFE27B!important}
 .pill,.note{background:#101F34;color:#D9E8F2;padding:.8rem 1rem;border-radius:8px;border:1px solid #19476A;margin:.5rem 0 1rem}
@@ -221,7 +224,7 @@ def selection_score(nav):
 
 def fmt_pct(x): return "—" if pd.isna(x) else f"{x:.2%}"
 def chart(fig,h=460):
-    fig.update_layout(height=h,margin=dict(l=20,r=20,t=55,b=20),paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="#101F34",font=dict(color="#D9E8F2"),title_font=dict(color="#E6EEF5",family="Arial"),legend_title_text="")
+    fig.update_layout(height=h,margin=dict(l=20,r=20,t=55,b=20),paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="#101F34",font=dict(color="#D9E8F2"),title_font=dict(color="#E6EEF5",family="Arial"),legend_title_text="",legend=dict(font=dict(color="#E6EEF5")),xaxis=dict(tickfont=dict(color="#D9E8F2"),title_font=dict(color="#D9E8F2")),yaxis=dict(tickfont=dict(color="#D9E8F2"),title_font=dict(color="#D9E8F2")))
     fig.update_xaxes(gridcolor="#28435A", zerolinecolor="#38617C")
     fig.update_yaxes(gridcolor="#28435A", zerolinecolor="#38617C")
     return fig
